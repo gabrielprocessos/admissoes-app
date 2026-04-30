@@ -164,7 +164,9 @@
 
 <!-- LOGIN -->
 <div id="login-screen" style="display:none;align-items:center;justify-content:center;min-height:100vh;">
-  <div class="login-box">
+
+  <!-- Tela normal de login -->
+  <div class="login-box" id="login-box-normal">
     <div class="login-logo">
       <div class="login-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="login-title">Admissões</div>
@@ -181,6 +183,26 @@
     </div>
     <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
   </div>
+
+  <!-- Tela de primeiro acesso (banco vazio) -->
+  <div class="login-box" id="login-box-primeiro" style="display:none">
+    <div class="login-logo">
+      <div class="login-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="login-title">Primeiro acesso</div>
+    </div>
+    <div class="login-sub" style="margin-bottom:16px">Nenhum usuário encontrado. Confirme seus dados para criar a conta administradora.</div>
+    <div style="background:var(--acc-l);border:1px solid var(--acc);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:12px;color:var(--acc)">
+      <strong>Usuário detectado:</strong> Gabriel<br>
+      Clique em "Criar conta e entrar" para confirmar.
+    </div>
+    <div id="primeiro-err" class="err-box"></div>
+    <div class="fg">
+      <label>Confirme sua senha</label>
+      <input type="password" id="primeiro-pw" placeholder="Digite: Marka@7777" onkeydown="if(event.key==='Enter')criarPrimeiro()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="criarPrimeiro()">Criar conta e entrar</button>
+  </div>
+
 </div>
 
 <!-- MAIN -->
@@ -477,14 +499,8 @@ async function doLogin() {
   const u = S.users.find(u=>u.id===uid);
   if(!u)   { err.textContent='Usuário não encontrado.'; err.style.display='block'; return; }
   if(u.senha && u.senha !== pw) { err.textContent='Senha incorreta.'; err.style.display='block'; return; }
-  curUser = u;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('main-screen').style.display  = 'flex';
-  document.getElementById('topbar-name').textContent    = u.apelido||u.nome;
-  const av = document.getElementById('topbar-av');
-  av.textContent = ini(u.nome); av.style.background = u.cor||'#185FA5';
   document.getElementById('login-pass').value = '';
-  renderAdm(); updateBadges();
+  entrarComo(u);
 }
 
 function doLogout() {
@@ -783,16 +799,64 @@ function renderHist() {
   }).join('');
 }
 
+// ─── PRIMEIRO ACESSO ─────────────────────────────────────────────────────────
+async function criarPrimeiro() {
+  const pw = document.getElementById('primeiro-pw').value;
+  const err = document.getElementById('primeiro-err');
+  err.style.display = 'none';
+  if(pw !== 'Marka@7777') {
+    err.textContent = 'Senha incorreta. Digite a senha correta para confirmar.';
+    err.style.display = 'block';
+    return;
+  }
+  const admin = {
+    nome: 'Gabriel',
+    apelido: 'Gabriel',
+    funcao: 'Múltiplas funções',
+    cor: '#185FA5',
+    senha: 'Marka@7777',
+  };
+  const { data, error } = await db.from('usuarios').insert(admin).select().single();
+  if(error) {
+    err.textContent = 'Erro ao criar conta: ' + error.message;
+    err.style.display = 'block';
+    return;
+  }
+  S.users = [data];
+  entrarComo(data);
+}
+
+function entrarComo(u) {
+  curUser = u;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display  = 'flex';
+  document.getElementById('topbar-name').textContent    = u.apelido || u.nome;
+  const av = document.getElementById('topbar-av');
+  av.textContent = ini(u.nome);
+  av.style.background = u.cor || '#185FA5';
+  renderAdm(); updateBadges();
+}
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
   try {
     await loadAll();
-    fillLoginSel();
   } catch(e) {
     console.error(e);
   }
   document.getElementById('splash').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
+
+  if(S.users.length === 0) {
+    // Banco vazio: mostrar tela de primeiro acesso
+    document.getElementById('login-box-normal').style.display  = 'none';
+    document.getElementById('login-box-primeiro').style.display = 'block';
+  } else {
+    // Usuários já existem: mostrar login normal
+    document.getElementById('login-box-normal').style.display  = 'block';
+    document.getElementById('login-box-primeiro').style.display = 'none';
+    fillLoginSel();
+  }
 }
 
 init();
