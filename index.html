@@ -7,216 +7,110 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #F5F4F0; --surf: #FFFFFF; --surf2: #EEECEA;
-    --bord: rgba(0,0,0,0.10); --bord2: rgba(0,0,0,0.18);
-    --tx: #1A1916; --tx2: #6B6A66; --tx3: #9E9D9A;
-    --acc: #185FA5; --acc-l: #E6F1FB;
-    --grn: #27500A; --grn-l: #EAF3DE;
-    --red: #A32D2D; --red-l: #FCEBEB;
-    --amb: #633806; --amb-l: #FAEEDA;
-    --r: 8px; --rl: 12px;
-    --ff: 'DM Sans', sans-serif; --fm: 'DM Mono', monospace;
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5F4F0;--surf:#fff;--surf2:#EEECEA;
+    --bord:rgba(0,0,0,.10);--bord2:rgba(0,0,0,.18);
+    --tx:#1A1916;--tx2:#6B6A66;--tx3:#9E9D9A;
+    --acc:#185FA5;--acc-l:#E6F1FB;
+    --grn:#27500A;--grn-l:#EAF3DE;
+    --red:#A32D2D;--red-l:#FCEBEB;
+    --amb:#633806;--amb-l:#FAEEDA;
+    --r:8px;--rl:12px;
+    --ff:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
   }
-  body { font-family: var(--ff); background: var(--bg); color: var(--tx); min-height: 100vh; font-size: 13px; line-height: 1.5; }
-
-  /* LOADING SPLASH */
-  #splash { position: fixed; inset: 0; background: var(--surf); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 12px; }
-  .splash-logo { width: 48px; height: 48px; background: var(--acc); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-  .splash-logo svg { width: 28px; height: 28px; }
-  .splash-text { font-size: 13px; color: var(--tx3); }
-
-  /* LOGIN */
-  #login-screen { display: none; min-height: 100vh; align-items: center; justify-content: center; background: var(--bg); }
-  .login-box { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--rl); padding: 36px; width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
-  .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-  .login-logo-icon { width: 36px; height: 36px; background: var(--acc); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
-  .login-logo-icon svg { width: 20px; height: 20px; }
-  .login-title { font-size: 17px; font-weight: 600; }
-  .login-sub { font-size: 12px; color: var(--tx2); margin-bottom: 24px; margin-top: 2px; }
-  .err-box { font-size: 12px; color: var(--red); background: var(--red-l); padding: 8px 10px; border-radius: var(--r); margin-bottom: 12px; display: none; }
-
-  /* MAIN */
-  #main-screen { display: none; flex-direction: column; min-height: 100vh; }
-  .topbar { background: var(--surf); border-bottom: 1px solid var(--bord); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
-  .topbar-logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--acc); }
-  .topbar-logo-icon { width: 28px; height: 28px; background: var(--acc); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
-  .topbar-logo-icon svg { width: 16px; height: 16px; }
-  .topbar-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--tx2); }
-  .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0; }
-
-  .nav { background: var(--surf); border-bottom: 1px solid var(--bord); padding: 0 20px; display: flex; gap: 2px; }
-  .ntab { padding: 9px 16px; border: none; background: none; font-family: var(--ff); font-size: 12px; font-weight: 500; color: var(--tx2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 5px; transition: color .12s; }
-  .ntab:hover { color: var(--tx); }
-  .ntab.on { color: var(--acc); border-bottom-color: var(--acc); }
-  .nbadge { background: var(--acc-l); color: var(--acc); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 99px; font-family: var(--fm); }
-
-  .content { padding: 20px; flex: 1; }
-  .page { display: none; } .page.on { display: block; }
-
-  .ph { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .ph-title { font-size: 16px; font-weight: 600; letter-spacing: -.3px; }
-  .ph-sub { font-size: 11px; color: var(--tx2); margin-top: 2px; }
-
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--r); font-family: var(--ff); font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--bord2); background: var(--surf); color: var(--tx); transition: background .1s; }
-  .btn:hover { background: var(--surf2); }
-  .btn-primary { background: var(--acc); color: #fff; border-color: var(--acc); } .btn-primary:hover { background: #0C447C; }
-  .btn-green { background: var(--grn); color: #fff; border-color: var(--grn); } .btn-green:hover { background: #173404; }
-  .btn-danger { background: var(--red-l); color: var(--red); border-color: rgba(163,45,45,.2); } .btn-danger:hover { background: #F7C1C1; }
-  .btn-sm { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
-  .btn-full { width: 100%; justify-content: center; margin-top: 6px; }
-
-  /* CARD */
-  .card { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--rl); box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-
-  /* STATS */
-  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
-  .sc { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--r); padding: 12px 14px; }
-  .sc-label { font-size: 10px; font-weight: 500; color: var(--tx3); text-transform: uppercase; letter-spacing: .5px; }
-  .sc-val { font-size: 24px; font-weight: 600; letter-spacing: -1px; }
-
-  /* TABLE */
-  .tw { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { background: var(--surf2); padding: 7px 10px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--tx2); border-bottom: 1px solid var(--bord); white-space: nowrap; }
-  td { padding: 8px 10px; border-bottom: 1px solid var(--bord); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(0,0,0,.012); }
-
-  /* BADGES */
-  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; white-space: nowrap; }
-  .b-grn { background: var(--grn-l); color: var(--grn); }
-  .b-amb { background: var(--amb-l); color: var(--amb); }
-  .b-red { background: var(--red-l); color: var(--red); }
-  .b-blu { background: var(--acc-l); color: var(--acc); }
-  .b-gry { background: var(--surf2); color: var(--tx2); }
-
-  /* FORM */
-  .fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-  .fg label { font-size: 11px; font-weight: 600; color: var(--tx2); text-transform: uppercase; letter-spacing: .4px; }
-  .fg input, .fg select, .fg textarea { padding: 8px 10px; border: 1px solid var(--bord2); border-radius: var(--r); font-family: var(--ff); font-size: 13px; color: var(--tx); background: var(--surf); outline: none; width: 100%; }
-  .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(24,95,165,.1); }
-  .fg textarea { resize: vertical; min-height: 64px; }
-  .fg-grid { display: grid; gap: 0 14px; }
-  .fg-2 { grid-template-columns: 1fr 1fr; }
-  .fg-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .fg-full { grid-column: 1 / -1; }
-  .div { height: 1px; background: var(--bord); margin: 12px 0; }
-
-  /* MODAL */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
-  .overlay.open { display: flex; }
-  .modal { background: var(--surf); border-radius: var(--rl); width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
-  .mh { padding: 16px 20px 12px; border-bottom: 1px solid var(--bord); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surf); z-index: 1; }
-  .mt { font-size: 15px; font-weight: 600; }
-  .mb { padding: 16px 20px; }
-  .mf { padding: 12px 20px; border-top: 1px solid var(--bord); display: flex; justify-content: flex-end; gap: 8px; background: var(--surf); position: sticky; bottom: 0; }
-
-  /* USERS GRID */
-  .ugrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .ucard { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--rl); padding: 14px; }
-  .ucard-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-
-  /* HISTORICO */
-  .hy { font-size: 14px; font-weight: 600; color: var(--tx); margin: 20px 0 8px; }
-  .hm { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
-  .hmh { padding: 10px 14px; background: var(--surf2); border-bottom: 1px solid var(--bord); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
-  .hmht { font-size: 12px; font-weight: 600; }
-  .hmc { font-size: 11px; color: var(--tx2); }
-  .hmb { display: none; } .hmb.open { display: block; }
-
-  /* CONFIRM */
-  .cbox { background: var(--surf); border-radius: var(--rl); padding: 28px; max-width: 360px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
-  .ctitle { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-  .cmsg { font-size: 12px; color: var(--tx2); line-height: 1.7; margin-bottom: 20px; }
-  .cact { display: flex; gap: 8px; justify-content: flex-end; }
-
-  /* TOAST */
-  .twr { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 7px; }
-  .tw2 { background: var(--tx); color: #fff; padding: 9px 16px; border-radius: var(--r); font-size: 12px; font-weight: 500; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; max-width: 300px; }
-  .tw2.show { opacity: 1; transform: translateY(0); }
-
-  /* MISC */
-  .srow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .srow input, .srow select { padding: 6px 10px; border: 1px solid var(--bord2); border-radius: var(--r); font-family: var(--ff); font-size: 12px; color: var(--tx); background: var(--surf); outline: none; }
-  .srow input:focus, .srow select:focus { border-color: var(--acc); }
-  .srow input[type=search] { max-width: 200px; }
-  .srow select { max-width: 170px; }
-  .mono { font-family: var(--fm); font-size: 11px; }
-  .obs-c { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .empty { text-align: center; padding: 36px; color: var(--tx3); font-size: 12px; }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--bord2); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 640px) { .fg-2, .fg-3 { grid-template-columns: 1fr; } .content { padding: 12px; } }
+  body{font-family:var(--ff);background:var(--bg);color:var(--tx);min-height:100vh;font-size:13px;line-height:1.5}
+  #splash{position:fixed;inset:0;background:var(--surf);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px}
+  .splash-icon{width:48px;height:48px;background:var(--acc);border-radius:12px;display:flex;align-items:center;justify-content:center}
+  .splash-icon svg{width:28px;height:28px}
+  .splash-txt{font-size:12px;color:var(--tx3)}
+  .topbar{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100}
+  .topbar-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--acc)}
+  .topbar-icon{width:28px;height:28px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .topbar-icon svg{width:16px;height:16px}
+  .topbar-date{font-size:11px;color:var(--tx3);font-family:var(--fm);margin-left:auto}
+  .nav{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;gap:2px}
+  .ntab{padding:9px 16px;border:none;background:none;font-family:var(--ff);font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px;transition:color .12s}
+  .ntab:hover{color:var(--tx)}.ntab.on{color:var(--acc);border-bottom-color:var(--acc)}
+  .nbadge{background:var(--acc-l);color:var(--acc);font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;font-family:var(--fm)}
+  .content{padding:20px;flex:1}
+  .page{display:none}.page.on{display:block}
+  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .ph-title{font-size:16px;font-weight:600;letter-spacing:-.3px}
+  .ph-sub{font-size:11px;color:var(--tx2);margin-top:2px}
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-family:var(--ff);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bord2);background:var(--surf);color:var(--tx);transition:background .1s}
+  .btn:hover{background:var(--surf2)}
+  .btn-primary{background:var(--acc);color:#fff;border-color:var(--acc)}.btn-primary:hover{background:#0C447C}
+  .btn-green{background:var(--grn);color:#fff;border-color:var(--grn)}.btn-green:hover{background:#173404}
+  .btn-danger{background:var(--red-l);color:var(--red);border-color:rgba(163,45,45,.2)}.btn-danger:hover{background:#F7C1C1}
+  .btn-sm{padding:4px 9px;font-size:11px;border-radius:6px}
+  .card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+  .sc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:12px 14px}
+  .sc-label{font-size:10px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
+  .sc-val{font-size:24px;font-weight:600;letter-spacing:-1px}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:var(--surf2);padding:7px 10px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--tx2);border-bottom:1px solid var(--bord);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid var(--bord);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(0,0,0,.012)}
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;white-space:nowrap}
+  .b-grn{background:var(--grn-l);color:var(--grn)}.b-amb{background:var(--amb-l);color:var(--amb)}
+  .b-red{background:var(--red-l);color:var(--red)}.b-blu{background:var(--acc-l);color:var(--acc)}.b-gry{background:var(--surf2);color:var(--tx2)}
+  .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+  .fg label{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
+  .fg input,.fg select,.fg textarea{padding:8px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:13px;color:var(--tx);background:var(--surf);outline:none;width:100%}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+  .fg textarea{resize:vertical;min-height:64px}
+  .fgg{display:grid;gap:0 14px}.fgg-2{grid-template-columns:1fr 1fr}.fgg-3{grid-template-columns:1fr 1fr 1fr}.fgg-full{grid-column:1/-1}
+  .div{height:1px;background:var(--bord);margin:12px 0}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+  .overlay.open{display:flex}
+  .modal{background:var(--surf);border-radius:var(--rl);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+  .mh{padding:16px 20px 12px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surf);z-index:1}
+  .mt{font-size:15px;font-weight:600}.mb{padding:16px 20px}
+  .mf{padding:12px 20px;border-top:1px solid var(--bord);display:flex;justify-content:flex-end;gap:8px;background:var(--surf);position:sticky;bottom:0}
+  .ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .ucard{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);padding:14px}
+  .hy{font-size:14px;font-weight:600;margin:20px 0 8px}
+  .hm{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+  .hmh{padding:10px 14px;background:var(--surf2);border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+  .hmht{font-size:12px;font-weight:600}.hmc{font-size:11px;color:var(--tx2)}
+  .hmb{display:none}.hmb.open{display:block}
+  .cbox{background:var(--surf);border-radius:var(--rl);padding:28px;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+  .ctitle{font-size:15px;font-weight:600;margin-bottom:8px}.cmsg{font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:20px}
+  .cact{display:flex;gap:8px;justify-content:flex-end}
+  .twr{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
+  .tw2{background:var(--tx);color:#fff;padding:9px 16px;border-radius:var(--r);font-size:12px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;max-width:300px}
+  .tw2.show{opacity:1;transform:translateY(0)}
+  .srow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .srow input,.srow select{padding:6px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:12px;color:var(--tx);background:var(--surf);outline:none}
+  .srow input:focus,.srow select:focus{border-color:var(--acc)}
+  .srow input[type=search]{max-width:220px}.srow select{max-width:170px}
+  .mono{font-family:var(--fm);font-size:11px}
+  .obs-c{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--bord2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{text-align:center;padding:36px;color:var(--tx3);font-size:12px}
+  @media(max-width:640px){.fgg-2,.fgg-3{grid-template-columns:1fr}.content{padding:12px}}
 </style>
 </head>
 <body>
 
-<!-- SPLASH -->
 <div id="splash">
-  <div class="splash-logo">
-    <svg viewBox="0 0 28 28" fill="none"><path d="M5 20l5-11 3 6 3-3 5 8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-  <div class="splash-text">Carregando...</div>
+  <div class="splash-icon"><svg viewBox="0 0 28 28" fill="none"><path d="M5 20l5-11 3 6 3-3 5 8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="splash-txt">Carregando...</div>
 </div>
 
-<!-- LOGIN -->
-<div id="login-screen" style="display:none;align-items:center;justify-content:center;min-height:100vh;">
-
-  <!-- Tela normal de login -->
-  <div class="login-box" id="login-box-normal">
-    <div class="login-logo">
-      <div class="login-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="login-title">Admissões</div>
-    </div>
-    <div class="login-sub">Faça login para acessar o sistema</div>
-    <div id="login-err" class="err-box"></div>
-    <div class="fg">
-      <label>Usuário</label>
-      <select id="login-user"><option value="">Selecione seu nome...</option></select>
-    </div>
-    <div class="fg">
-      <label>Senha</label>
-      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
-  </div>
-
-  <!-- Tela de primeiro acesso (banco vazio) -->
-  <div class="login-box" id="login-box-primeiro" style="display:none">
-    <div class="login-logo">
-      <div class="login-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="login-title">Primeiro acesso</div>
-    </div>
-    <div class="login-sub" style="margin-bottom:16px">Nenhum usuário encontrado. Confirme seus dados para criar a conta administradora.</div>
-    <div style="background:var(--acc-l);border:1px solid var(--acc);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:12px;color:var(--acc)">
-      <strong>Usuário detectado:</strong> Gabriel<br>
-      Clique em "Criar conta e entrar" para confirmar.
-    </div>
-    <div id="primeiro-err" class="err-box"></div>
-    <div class="fg">
-      <label>Confirme sua senha</label>
-      <input type="password" id="primeiro-pw" placeholder="Digite: Marka@7777" onkeydown="if(event.key==='Enter')criarPrimeiro()">
-    </div>
-    <button class="btn btn-primary btn-full" onclick="criarPrimeiro()">Criar conta e entrar</button>
-  </div>
-
-</div>
-
-<!-- MAIN -->
-<div id="main-screen" style="display:none;flex-direction:column;min-height:100vh;">
+<div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
     <div class="topbar-logo">
-      <div class="topbar-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="topbar-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       Controle de Admissões
     </div>
-    <div class="topbar-right">
-      <div class="avatar" id="topbar-av" style="background:var(--acc)"></div>
-      <span id="topbar-name"></span>
-      <button class="btn btn-sm" onclick="doLogout()">Sair</button>
-    </div>
+    <div class="topbar-date" id="topbar-date"></div>
   </div>
   <nav class="nav">
     <button class="ntab on" onclick="showPage('admissoes')">Admissões <span class="nbadge" id="b-adm">0</span></button>
@@ -226,10 +120,9 @@
   </nav>
   <div class="content">
 
-    <!-- ADMISSÕES -->
     <div class="page on" id="page-admissoes">
       <div class="ph">
-        <div><div class="ph-title">Admissões em andamento</div><div class="ph-sub">Gerencie admissões abertas</div></div>
+        <div><div class="ph-title">Admissões em andamento</div><div class="ph-sub">Gerencie as admissões abertas</div></div>
         <button class="btn btn-primary" onclick="openAdmModal()">+ Nova admissão</button>
       </div>
       <div class="stats" id="stats-adm"></div>
@@ -259,17 +152,15 @@
       </div>
     </div>
 
-    <!-- USUARIOS -->
     <div class="page" id="page-usuarios">
       <div class="ph">
-        <div><div class="ph-title">Usuários</div><div class="ph-sub">Gerencie quem acessa o sistema</div></div>
+        <div><div class="ph-title">Usuários</div><div class="ph-sub">Pessoas que participam das admissões</div></div>
         <button class="btn btn-primary" onclick="openUsrModal()">+ Novo usuário</button>
       </div>
       <div id="loading-usr" class="empty"><div class="spinner"></div></div>
       <div class="ugrid" id="grid-usr"></div>
     </div>
 
-    <!-- CLIENTES -->
     <div class="page" id="page-clientes">
       <div class="ph">
         <div><div class="ph-title">Clientes</div><div class="ph-sub">Empresas cadastradas</div></div>
@@ -287,7 +178,6 @@
       </div>
     </div>
 
-    <!-- HISTORICO -->
     <div class="page" id="page-historico">
       <div class="ph">
         <div><div class="ph-title">Histórico</div><div class="ph-sub">Admissões concluídas por mês</div></div>
@@ -307,32 +197,32 @@
     <div class="mh"><span class="mt" id="mo-adm-t">Nova admissão</span><button class="btn btn-sm" onclick="closeM('mo-adm')">✕</button></div>
     <div class="mb">
       <input type="hidden" id="a-id">
-      <div class="fg-grid fg-3">
+      <div class="fgg fgg-3">
         <div class="fg"><label>Data solicitação</label><input type="date" id="a-dsol"></div>
         <div class="fg"><label>Data admissão</label><input type="date" id="a-dadm"></div>
         <div class="fg"><label>Data entrega</label><input type="date" id="a-dent"></div>
       </div>
       <div class="div"></div>
-      <div class="fg-grid fg-2">
+      <div class="fgg fgg-2">
         <div class="fg"><label>Aux. responsável</label><select id="a-aux"></select></div>
         <div class="fg"><label>Responsável empresa</label><select id="a-resp"></select></div>
         <div class="fg"><label>Estagiária responsável</label><select id="a-est"></select></div>
         <div class="fg"><label>Empresa (cliente)</label><select id="a-cli"></select></div>
       </div>
       <div class="div"></div>
-      <div class="fg-grid fg-2">
+      <div class="fgg fgg-2">
         <div class="fg"><label>Nome do empregado</label><input type="text" id="a-emp" placeholder="Nome completo"></div>
         <div class="fg"><label>Status</label>
           <select id="a-status"><option>Em andamento</option><option>Pendente</option><option>Suspenso</option></select>
         </div>
-        <div class="fg fg-full"><label>Observação</label><textarea id="a-obs" placeholder="Informações adicionais..."></textarea></div>
+        <div class="fg fgg-full"><label>Observação</label><textarea id="a-obs" placeholder="Informações adicionais..."></textarea></div>
       </div>
     </div>
     <div class="mf"><button class="btn" onclick="closeM('mo-adm')">Cancelar</button><button class="btn btn-primary" onclick="saveAdm()">Salvar</button></div>
   </div>
 </div>
 
-<!-- MODAL USUARIO -->
+<!-- MODAL USUÁRIO -->
 <div class="overlay" id="mo-usr">
   <div class="modal" style="max-width:400px">
     <div class="mh"><span class="mt" id="mo-usr-t">Novo usuário</span><button class="btn btn-sm" onclick="closeM('mo-usr')">✕</button></div>
@@ -354,9 +244,6 @@
           <option value="#5F5E5A">Cinza</option>
         </select>
       </div>
-      <div class="div"></div>
-      <div class="fg"><label>Senha de acesso</label><input type="password" id="u-pw" placeholder="Mínimo 4 caracteres"></div>
-      <div class="fg"><label>Confirmar senha</label><input type="password" id="u-pw2" placeholder="Repita a senha"></div>
     </div>
     <div class="mf"><button class="btn" onclick="closeM('mo-usr')">Cancelar</button><button class="btn btn-primary" onclick="saveUsr()">Salvar</button></div>
   </div>
@@ -369,7 +256,7 @@
     <div class="mb">
       <input type="hidden" id="c-id">
       <div class="fg"><label>Nome da empresa</label><input type="text" id="c-nome" placeholder="Ex: Colegio Jean Piajet"></div>
-      <div class="fg-grid fg-2">
+      <div class="fgg fgg-2">
         <div class="fg"><label>Código</label><input type="text" id="c-cod" placeholder="Ex: 470"></div>
         <div class="fg"><label>Contato</label><input type="text" id="c-cont" placeholder="Telefone ou email"></div>
       </div>
@@ -379,8 +266,8 @@
   </div>
 </div>
 
-<!-- CONFIRM -->
-<div class="overlay" id="conf-overlay">
+<!-- CONFIRMAR -->
+<div class="overlay" id="conf-ov">
   <div class="cbox">
     <div class="ctitle" id="conf-t"></div>
     <div class="cmsg" id="conf-m"></div>
@@ -391,71 +278,54 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="twr" id="twr"></div>
 
 <script>
-// ─── CONFIG ─────────────────────────────────────────────────────────────────
-// Cole aqui as suas credenciais do Supabase (veja o arquivo LEIA-ME.md)
 const SUPABASE_URL = 'https://xopwyacmxilyzapnmqtl.supabase.co/rest/v1/';
 const SUPABASE_KEY = 'sb_publishable_MCmb3hDxCOv8OUxyuxyZOw_RI2VkVvI';
-
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── CACHE LOCAL ────────────────────────────────────────────────────────────
-let S = { users: [], clients: [], admissoes: [], historico: [] };
-let curUser = null;
+let S = { users:[], clients:[], admissoes:[], historico:[] };
 let editId = null;
-let confCb = null;
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const uid = () => crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2);
 const today = () => new Date().toISOString().slice(0,10);
-const fmtD = d => { if(!d) return '—'; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
-const ini = n => n ? n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+const fmtD  = d => { if(!d) return '—'; const[y,m,dd]=d.split('-'); return`${dd}/${m}/${y}`; };
+const ini   = n => n ? n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
 
-// ─── SUPABASE HELPERS ────────────────────────────────────────────────────────
 async function loadAll() {
-  const [u, c, a, h] = await Promise.all([
+  const [u,c,a,h] = await Promise.all([
     db.from('usuarios').select('*').order('nome'),
     db.from('clientes').select('*').order('nome'),
-    db.from('admissoes').select('*').order('criado_em', { ascending: false }),
-    db.from('historico').select('*').order('concluido_em', { ascending: false }),
+    db.from('admissoes').select('*').order('criado_em',{ascending:false}),
+    db.from('historico').select('*').order('concluido_em',{ascending:false}),
   ]);
-  S.users     = u.data || [];
-  S.clients   = c.data || [];
-  S.admissoes = a.data || [];
-  S.historico = h.data || [];
+  S.users=u.data||[]; S.clients=c.data||[]; S.admissoes=a.data||[]; S.historico=h.data||[];
 }
 
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function toast(msg, type='') {
-  const el = document.createElement('div');
-  el.className = 'tw2';
-  if (type==='green') el.style.background = '#27500A';
-  if (type==='red')   el.style.background = '#A32D2D';
-  el.textContent = msg;
-  document.getElementById('twr').appendChild(el);
-  setTimeout(()=>el.classList.add('show'), 10);
-  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 250); }, 2800);
+function toast(msg,type='') {
+  const el=document.createElement('div'); el.className='tw2';
+  if(type==='green') el.style.background='#27500A';
+  if(type==='red')   el.style.background='#A32D2D';
+  el.textContent=msg; document.getElementById('twr').appendChild(el);
+  setTimeout(()=>el.classList.add('show'),10);
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),250); },2800);
 }
 
-function openConf(title, msg, cb, lbl='Confirmar', cls='btn-primary') {
-  document.getElementById('conf-t').textContent = title;
-  document.getElementById('conf-m').textContent = msg;
-  const btn = document.getElementById('conf-ok');
-  btn.textContent = lbl; btn.className = 'btn ' + cls;
-  confCb = cb;
-  document.getElementById('conf-overlay').classList.add('open');
+function openConf(title,msg,cb,lbl='Confirmar',cls='btn-primary') {
+  document.getElementById('conf-t').textContent=title;
+  document.getElementById('conf-m').textContent=msg;
+  const btn=document.getElementById('conf-ok');
+  btn.textContent=lbl; btn.className='btn '+cls;
+  btn.onclick=()=>{ cb(); closeConf(); };
+  document.getElementById('conf-ov').classList.add('open');
 }
-function closeConf() { document.getElementById('conf-overlay').classList.remove('open'); confCb = null; }
-window.doConf = () => { if(confCb) confCb(); closeConf(); };
-document.getElementById('conf-ok').onclick = () => doConf();
+function closeConf(){ document.getElementById('conf-ov').classList.remove('open'); }
 
-function openM(id)  { document.getElementById(id).classList.add('open'); }
-function closeM(id) { document.getElementById(id).classList.remove('open'); editId = null; }
-document.querySelectorAll('.overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); editId=null; }
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -469,147 +339,112 @@ function showPage(id) {
 }
 
 function updateBadges() {
-  document.getElementById('b-adm').textContent  = S.admissoes.length;
-  document.getElementById('b-usr').textContent  = S.users.length;
-  document.getElementById('b-cli').textContent  = S.clients.length;
-  document.getElementById('b-hist').textContent = S.historico.length;
+  document.getElementById('b-adm').textContent=S.admissoes.length;
+  document.getElementById('b-usr').textContent=S.users.length;
+  document.getElementById('b-cli').textContent=S.clients.length;
+  document.getElementById('b-hist').textContent=S.historico.length;
 }
 
-const statusBadge = s => {
-  const m = {'Em andamento':'b-blu','Pendente':'b-amb','Suspenso':'b-red','Concluída':'b-grn'};
-  return `<span class="badge ${m[s]||'b-gry'}">${s}</span>`;
-};
-const getUN = id => { const u=S.users.find(u=>u.id===id); return u?(u.apelido||u.nome):'—'; };
-const getUC = id => { const u=S.users.find(u=>u.id===id); return u?.cor||'#5F5E5A'; };
-const getCN = id => { const c=S.clients.find(c=>c.id===id); if(!c) return id||'—'; return c.nome+(c.codigo?` (${c.codigo})`:''); };
-const avHtml = (id, size=22) => `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*.38)}px;background:${getUC(id)}">${ini(getUN(id))}</div>`;
+const sBadge=s=>{ const m={'Em andamento':'b-blu','Pendente':'b-amb','Suspenso':'b-red','Concluída':'b-grn'}; return`<span class="badge ${m[s]||'b-gry'}">${s}</span>`; };
+const getUN=id=>{ const u=S.users.find(u=>u.id===id); return u?(u.apelido||u.nome):'—'; };
+const getUC=id=>{ const u=S.users.find(u=>u.id===id); return u?.cor||'#5F5E5A'; };
+const getCN=id=>{ const c=S.clients.find(c=>c.id===id); if(!c) return id||'—'; return c.nome+(c.codigo?` (${c.codigo})`:''); };
+const avHtml=id=>`<div class="avatar" style="background:${getUC(id)}">${ini(getUN(id))}</div>`;
 
-// ─── LOGIN ───────────────────────────────────────────────────────────────────
-function fillLoginSel() {
-  const sel = document.getElementById('login-user');
-  sel.innerHTML = '<option value="">Selecione seu nome...</option>' + S.users.map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
-}
-
-async function doLogin() {
-  const uid = document.getElementById('login-user').value;
-  const pw  = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-err');
-  err.style.display = 'none';
-  if(!uid) { err.textContent='Selecione seu nome.'; err.style.display='block'; return; }
-  const u = S.users.find(u=>u.id===uid);
-  if(!u)   { err.textContent='Usuário não encontrado.'; err.style.display='block'; return; }
-  if(u.senha && u.senha !== pw) { err.textContent='Senha incorreta.'; err.style.display='block'; return; }
-  document.getElementById('login-pass').value = '';
-  entrarComo(u);
-}
-
-function doLogout() {
-  curUser = null;
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('main-screen').style.display  = 'none';
-}
-
-// ─── POPULATE SELECTS ────────────────────────────────────────────────────────
 function populateSels() {
-  ['a-aux','a-resp','a-est'].forEach(sid => {
-    const s=document.getElementById(sid), cur=s.value;
+  ['a-aux','a-resp','a-est'].forEach(sid=>{
+    const s=document.getElementById(sid),cur=s.value;
     s.innerHTML='<option value="">— Selecione —</option>'+S.users.map(u=>`<option value="${u.id}">${u.apelido||u.nome}</option>`).join('');
     if(cur) s.value=cur;
   });
-  const cs=document.getElementById('a-cli'), cur=cs.value;
+  const cs=document.getElementById('a-cli'),cur=cs.value;
   cs.innerHTML='<option value="">— Selecione —</option>'+S.clients.map(c=>`<option value="${c.id}">${c.nome}${c.codigo?` (${c.codigo})`:''}</option>`).join('');
   if(cur) cs.value=cur;
   const fe=document.getElementById('f-est');
   if(fe){ const c2=fe.value; fe.innerHTML='<option value="">Todas estagiárias</option>'+S.users.map(u=>`<option value="${u.id}">${u.apelido||u.nome}</option>`).join(''); if(c2) fe.value=c2; }
 }
 
-// ─── ADMISSÕES ───────────────────────────────────────────────────────────────
 function openAdmModal(id=null) {
-  editId = id; populateSels();
-  document.getElementById('mo-adm-t').textContent = id ? 'Editar admissão' : 'Nova admissão';
-  const a = id ? S.admissoes.find(a=>a.id===id) : null;
-  document.getElementById('a-id').value   = a?.id||'';
-  document.getElementById('a-dsol').value = a?.data_solicitacao||today();
-  document.getElementById('a-dadm').value = a?.data_admissao||'';
-  document.getElementById('a-dent').value = a?.data_entrega||'';
-  document.getElementById('a-aux').value  = a?.auxiliar_id||'';
-  document.getElementById('a-resp').value = a?.responsavel_id||'';
-  document.getElementById('a-est').value  = a?.estagiaria_id||'';
-  document.getElementById('a-cli').value  = a?.cliente_id||'';
-  document.getElementById('a-emp').value  = a?.empregado||'';
-  document.getElementById('a-status').value = a?.status||'Em andamento';
-  document.getElementById('a-obs').value  = a?.observacao||'';
+  editId=id; populateSels();
+  document.getElementById('mo-adm-t').textContent=id?'Editar admissão':'Nova admissão';
+  const a=id?S.admissoes.find(a=>a.id===id):null;
+  document.getElementById('a-id').value=a?.id||'';
+  document.getElementById('a-dsol').value=a?.data_solicitacao||today();
+  document.getElementById('a-dadm').value=a?.data_admissao||'';
+  document.getElementById('a-dent').value=a?.data_entrega||'';
+  document.getElementById('a-aux').value=a?.auxiliar_id||'';
+  document.getElementById('a-resp').value=a?.responsavel_id||'';
+  document.getElementById('a-est').value=a?.estagiaria_id||'';
+  document.getElementById('a-cli').value=a?.cliente_id||'';
+  document.getElementById('a-emp').value=a?.empregado||'';
+  document.getElementById('a-status').value=a?.status||'Em andamento';
+  document.getElementById('a-obs').value=a?.observacao||'';
   openM('mo-adm');
 }
 
 async function saveAdm() {
-  const emp = document.getElementById('a-emp').value.trim();
-  if(!emp) { toast('Preencha o nome do empregado','red'); return; }
-  const obj = {
-    data_solicitacao: document.getElementById('a-dsol').value,
-    data_admissao:    document.getElementById('a-dadm').value || null,
-    data_entrega:     document.getElementById('a-dent').value || null,
-    auxiliar_id:      document.getElementById('a-aux').value  || null,
-    responsavel_id:   document.getElementById('a-resp').value || null,
-    estagiaria_id:    document.getElementById('a-est').value  || null,
-    cliente_id:       document.getElementById('a-cli').value  || null,
-    empregado: emp,
-    status:    document.getElementById('a-status').value,
-    observacao: document.getElementById('a-obs').value.trim() || null,
-    criado_por: curUser?.id || null,
+  const emp=document.getElementById('a-emp').value.trim();
+  if(!emp){ toast('Preencha o nome do empregado','red'); return; }
+  const obj={
+    data_solicitacao:document.getElementById('a-dsol').value||null,
+    data_admissao:document.getElementById('a-dadm').value||null,
+    data_entrega:document.getElementById('a-dent').value||null,
+    auxiliar_id:document.getElementById('a-aux').value||null,
+    responsavel_id:document.getElementById('a-resp').value||null,
+    estagiaria_id:document.getElementById('a-est').value||null,
+    cliente_id:document.getElementById('a-cli').value||null,
+    empregado:emp, status:document.getElementById('a-status').value,
+    observacao:document.getElementById('a-obs').value.trim()||null,
   };
-  let err;
-  if(editId) {
-    ({ error: err } = await db.from('admissoes').update(obj).eq('id', editId));
-  } else {
-    ({ error: err } = await db.from('admissoes').insert(obj));
-  }
-  if(err) { toast('Erro ao salvar: '+err.message,'red'); return; }
-  toast(editId ? 'Admissão atualizada' : 'Admissão criada', 'green');
+  let error;
+  if(editId)({error}=await db.from('admissoes').update(obj).eq('id',editId));
+  else({error}=await db.from('admissoes').insert(obj));
+  if(error){ toast('Erro: '+error.message,'red'); return; }
+  toast(editId?'Admissão atualizada':'Admissão criada','green');
   closeM('mo-adm');
-  const { data } = await db.from('admissoes').select('*').order('criado_em',{ascending:false});
-  S.admissoes = data || [];
-  renderAdm(); updateBadges();
+  const {data}=await db.from('admissoes').select('*').order('criado_em',{ascending:false});
+  S.admissoes=data||[]; renderAdm(); updateBadges();
 }
 
 function renderAdm() {
-  const loading = document.getElementById('loading-adm');
-  const table   = document.getElementById('tw-adm');
-  loading.style.display = 'none'; table.style.display = 'block';
+  document.getElementById('loading-adm').style.display='none';
+  document.getElementById('tw-adm').style.display='block';
   populateSels();
-  const srch  = (document.getElementById('s-adm')?.value||'').toLowerCase();
-  const sfilt = document.getElementById('f-status')?.value||'';
-  const efilt = document.getElementById('f-est')?.value||'';
-  let list = S.admissoes.filter(a => {
-    const txt = [a.empregado, getCN(a.cliente_id), getUN(a.auxiliar_id), getUN(a.estagiaria_id)].join(' ').toLowerCase();
-    if(srch && !txt.includes(srch)) return false;
-    if(sfilt && a.status!==sfilt) return false;
-    if(efilt && a.estagiaria_id!==efilt) return false;
+  const srch=(document.getElementById('s-adm')?.value||'').toLowerCase();
+  const sf=document.getElementById('f-status')?.value||'';
+  const ef=document.getElementById('f-est')?.value||'';
+  let list=S.admissoes.filter(a=>{
+    const txt=[a.empregado,getCN(a.cliente_id),getUN(a.auxiliar_id),getUN(a.estagiaria_id)].join(' ').toLowerCase();
+    if(srch&&!txt.includes(srch)) return false;
+    if(sf&&a.status!==sf) return false;
+    if(ef&&a.estagiaria_id!==ef) return false;
     return true;
   });
-  const total=S.admissoes.length, and=S.admissoes.filter(a=>a.status==='Em andamento').length,
-    pend=S.admissoes.filter(a=>a.status==='Pendente').length, susp=S.admissoes.filter(a=>a.status==='Suspenso').length;
+  const total=S.admissoes.length,
+    and=S.admissoes.filter(a=>a.status==='Em andamento').length,
+    pend=S.admissoes.filter(a=>a.status==='Pendente').length,
+    susp=S.admissoes.filter(a=>a.status==='Suspenso').length;
   document.getElementById('stats-adm').innerHTML=`
     <div class="sc"><div class="sc-label">Total</div><div class="sc-val">${total}</div></div>
-    <div class="sc" style="border-left:3px solid #185FA5;border-radius:0 var(--r) var(--r) 0"><div class="sc-label">Em andamento</div><div class="sc-val" style="color:#185FA5">${and}</div></div>
-    <div class="sc" style="border-left:3px solid #633806;border-radius:0 var(--r) var(--r) 0"><div class="sc-label">Pendente</div><div class="sc-val" style="color:#633806">${pend}</div></div>
-    <div class="sc" style="border-left:3px solid #A32D2D;border-radius:0 var(--r) var(--r) 0"><div class="sc-label">Suspenso</div><div class="sc-val" style="color:#A32D2D">${susp}</div></div>`;
-  const tbody=document.getElementById('tbody-adm'), empty=document.getElementById('empty-adm');
+    <div class="sc" style="border-left:3px solid #185FA5"><div class="sc-label">Em andamento</div><div class="sc-val" style="color:#185FA5">${and}</div></div>
+    <div class="sc" style="border-left:3px solid #633806"><div class="sc-label">Pendente</div><div class="sc-val" style="color:#633806">${pend}</div></div>
+    <div class="sc" style="border-left:3px solid #A32D2D"><div class="sc-label">Suspenso</div><div class="sc-val" style="color:#A32D2D">${susp}</div></div>`;
+  const tbody=document.getElementById('tbody-adm'),empty=document.getElementById('empty-adm');
   if(!list.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   tbody.innerHTML=list.map(a=>`<tr>
     <td class="mono">${fmtD(a.data_solicitacao)}</td>
     <td class="mono">${fmtD(a.data_admissao)}</td>
     <td><div style="display:flex;align-items:center;gap:5px">${avHtml(a.auxiliar_id)}<span>${getUN(a.auxiliar_id)}</span></div></td>
-    <td style="color:var(--tx2);font-size:11px">${getUN(a.responsavel_id)}</td>
+    <td style="color:var(--tx2)">${getUN(a.responsavel_id)}</td>
     <td><div style="display:flex;align-items:center;gap:5px">${avHtml(a.estagiaria_id)}<span>${getUN(a.estagiaria_id)}</span></div></td>
-    <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px">${getCN(a.cliente_id)}</td>
+    <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${getCN(a.cliente_id)}</td>
     <td class="mono">${fmtD(a.data_entrega)}</td>
     <td><strong>${a.empregado}</strong></td>
-    <td class="obs-c" style="color:var(--tx2);font-size:11px" title="${a.observacao||''}">${a.observacao||'—'}</td>
-    <td>${statusBadge(a.status)}</td>
+    <td class="obs-c" style="color:var(--tx2)" title="${a.observacao||''}">${a.observacao||'—'}</td>
+    <td>${sBadge(a.status)}</td>
     <td><div style="display:flex;gap:3px;justify-content:flex-end">
-      <button class="btn btn-sm btn-green" onclick="concluirAdm('${a.id}')" title="Concluir">✓</button>
+      <button class="btn btn-sm btn-green" onclick="concluirAdm('${a.id}')">✓ Concluído</button>
       <button class="btn btn-sm" onclick="openAdmModal('${a.id}')">✎</button>
       <button class="btn btn-sm btn-danger" onclick="delAdm('${a.id}')">✕</button>
     </div></td>
@@ -617,69 +452,60 @@ function renderAdm() {
 }
 
 async function concluirAdm(id) {
-  const a = S.admissoes.find(a=>a.id===id);
-  openConf('Concluir admissão',`Mover "${a.empregado}" para o histórico? Esta ação não pode ser desfeita.`, async()=>{
-    const histObj = {...a, id: undefined, admissao_id: a.id, status:'Concluída', concluido_em: new Date().toISOString(), concluido_por: curUser?.id||null };
-    delete histObj.id;
-    const { error: e1 } = await db.from('historico').insert(histObj);
-    const { error: e2 } = await db.from('admissoes').delete().eq('id', id);
-    if(e1||e2) { toast('Erro ao concluir','red'); return; }
-    const [ra, rh] = await Promise.all([
+  const a=S.admissoes.find(a=>a.id===id);
+  openConf('Concluir admissão',`Mover "${a.empregado}" para o histórico? Não pode ser desfeito.`,async()=>{
+    const hist={...a,admissao_id:a.id,status:'Concluída',concluido_em:new Date().toISOString()};
+    delete hist.id; delete hist.criado_em;
+    await db.from('historico').insert(hist);
+    await db.from('admissoes').delete().eq('id',id);
+    const [ra,rh]=await Promise.all([
       db.from('admissoes').select('*').order('criado_em',{ascending:false}),
       db.from('historico').select('*').order('concluido_em',{ascending:false}),
     ]);
-    S.admissoes = ra.data||[]; S.historico = rh.data||[];
+    S.admissoes=ra.data||[]; S.historico=rh.data||[];
     renderAdm(); updateBadges(); toast('Admissão concluída e arquivada','green');
   },'Concluir e arquivar','btn-green');
 }
 
 async function delAdm(id) {
-  openConf('Excluir admissão','Esta admissão será excluída permanentemente.',async()=>{
-    await db.from('admissoes').delete().eq('id', id);
-    S.admissoes = S.admissoes.filter(a=>a.id!==id);
+  openConf('Excluir admissão','Será excluída permanentemente.',async()=>{
+    await db.from('admissoes').delete().eq('id',id);
+    S.admissoes=S.admissoes.filter(a=>a.id!==id);
     renderAdm(); updateBadges(); toast('Admissão removida');
   },'Excluir','btn-danger');
 }
 
-// ─── USUÁRIOS ────────────────────────────────────────────────────────────────
 function openUsrModal(id=null) {
   editId=id;
-  document.getElementById('mo-usr-t').textContent = id ? 'Editar usuário' : 'Novo usuário';
-  const u = id ? S.users.find(u=>u.id===id) : null;
-  document.getElementById('u-id').value   = u?.id||'';
-  document.getElementById('u-nome').value = u?.nome||'';
-  document.getElementById('u-apel').value = u?.apelido||'';
-  document.getElementById('u-func').value = u?.funcao||'Estagiária Responsável';
-  document.getElementById('u-cor').value  = u?.cor||'#185FA5';
-  document.getElementById('u-pw').value   = '';
-  document.getElementById('u-pw2').value  = '';
+  document.getElementById('mo-usr-t').textContent=id?'Editar usuário':'Novo usuário';
+  const u=id?S.users.find(u=>u.id===id):null;
+  document.getElementById('u-id').value=u?.id||'';
+  document.getElementById('u-nome').value=u?.nome||'';
+  document.getElementById('u-apel').value=u?.apelido||'';
+  document.getElementById('u-func').value=u?.funcao||'Estagiária Responsável';
+  document.getElementById('u-cor').value=u?.cor||'#185FA5';
   openM('mo-usr');
 }
 
 async function saveUsr() {
   const nome=document.getElementById('u-nome').value.trim();
   if(!nome){ toast('Preencha o nome','red'); return; }
-  const pw=document.getElementById('u-pw').value, pw2=document.getElementById('u-pw2').value;
-  if(pw && pw!==pw2)   { toast('Senhas não coincidem','red'); return; }
-  if(!editId && !pw)   { toast('Defina uma senha','red'); return; }
-  if(pw && pw.length<4){ toast('Senha mínima: 4 caracteres','red'); return; }
-  const existing = editId ? S.users.find(u=>u.id===editId) : null;
-  const obj = { nome, apelido: document.getElementById('u-apel').value.trim()||nome.split(' ')[0],
-    funcao: document.getElementById('u-func').value, cor: document.getElementById('u-cor').value,
-    senha: pw || existing?.senha || '' };
-  let err;
-  if(editId) ({ error:err } = await db.from('usuarios').update(obj).eq('id',editId));
-  else       ({ error:err } = await db.from('usuarios').insert(obj));
-  if(err){ toast('Erro: '+err.message,'red'); return; }
+  const obj={nome,apelido:document.getElementById('u-apel').value.trim()||nome.split(' ')[0],
+    funcao:document.getElementById('u-func').value,cor:document.getElementById('u-cor').value};
+  let error;
+  if(editId)({error}=await db.from('usuarios').update(obj).eq('id',editId));
+  else({error}=await db.from('usuarios').insert(obj));
+  if(error){ toast('Erro: '+error.message,'red'); return; }
   toast(editId?'Usuário atualizado':'Usuário cadastrado','green');
   const {data}=await db.from('usuarios').select('*').order('nome');
-  S.users=data||[]; closeM('mo-usr'); renderUsr(); fillLoginSel(); updateBadges();
+  S.users=data||[]; closeM('mo-usr'); renderUsr(); updateBadges();
 }
 
 async function delUsr(id) {
-  openConf('Excluir usuário','O usuário será removido permanentemente.',async()=>{
+  openConf('Excluir usuário','Será removido permanentemente.',async()=>{
     await db.from('usuarios').delete().eq('id',id);
-    S.users=S.users.filter(u=>u.id!==id); renderUsr(); fillLoginSel(); updateBadges(); toast('Usuário removido');
+    S.users=S.users.filter(u=>u.id!==id);
+    renderUsr(); updateBadges(); toast('Usuário removido');
   },'Excluir','btn-danger');
 }
 
@@ -688,7 +514,7 @@ function renderUsr() {
   const g=document.getElementById('grid-usr');
   if(!S.users.length){ g.innerHTML='<div class="empty" style="grid-column:1/-1">Nenhum usuário cadastrado</div>'; return; }
   g.innerHTML=S.users.map(u=>`<div class="ucard">
-    <div class="ucard-top">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div class="avatar" style="width:38px;height:38px;font-size:14px;background:${u.cor||'#185FA5'}">${ini(u.nome)}</div>
       <div><div style="font-size:13px;font-weight:600">${u.nome}</div><div style="font-size:11px;color:var(--tx2)">${u.funcao}</div></div>
     </div>
@@ -699,44 +525,45 @@ function renderUsr() {
   </div>`).join('');
 }
 
-// ─── CLIENTES ────────────────────────────────────────────────────────────────
 function openCliModal(id=null) {
   editId=id;
-  document.getElementById('mo-cli-t').textContent = id ? 'Editar cliente' : 'Novo cliente';
-  const c = id ? S.clients.find(c=>c.id===id) : null;
-  document.getElementById('c-id').value   = c?.id||'';
-  document.getElementById('c-nome').value = c?.nome||'';
-  document.getElementById('c-cod').value  = c?.codigo||'';
-  document.getElementById('c-cont').value = c?.contato||'';
-  document.getElementById('c-obs').value  = c?.obs||'';
+  document.getElementById('mo-cli-t').textContent=id?'Editar cliente':'Novo cliente';
+  const c=id?S.clients.find(c=>c.id===id):null;
+  document.getElementById('c-id').value=c?.id||'';
+  document.getElementById('c-nome').value=c?.nome||'';
+  document.getElementById('c-cod').value=c?.codigo||'';
+  document.getElementById('c-cont').value=c?.contato||'';
+  document.getElementById('c-obs').value=c?.obs||'';
   openM('mo-cli');
 }
 
 async function saveCli() {
   const nome=document.getElementById('c-nome').value.trim();
   if(!nome){ toast('Preencha o nome','red'); return; }
-  const obj={nome, codigo:document.getElementById('c-cod').value.trim()||null,
-    contato:document.getElementById('c-cont').value.trim()||null, obs:document.getElementById('c-obs').value.trim()||null};
-  let err;
-  if(editId) ({ error:err }=await db.from('clientes').update(obj).eq('id',editId));
-  else       ({ error:err }=await db.from('clientes').insert(obj));
-  if(err){ toast('Erro: '+err.message,'red'); return; }
+  const obj={nome,codigo:document.getElementById('c-cod').value.trim()||null,
+    contato:document.getElementById('c-cont').value.trim()||null,
+    obs:document.getElementById('c-obs').value.trim()||null};
+  let error;
+  if(editId)({error}=await db.from('clientes').update(obj).eq('id',editId));
+  else({error}=await db.from('clientes').insert(obj));
+  if(error){ toast('Erro: '+error.message,'red'); return; }
   toast(editId?'Cliente atualizado':'Cliente cadastrado','green');
   const {data}=await db.from('clientes').select('*').order('nome');
   S.clients=data||[]; closeM('mo-cli'); renderCli(); updateBadges();
 }
 
 async function delCli(id) {
-  openConf('Excluir cliente','O cliente será removido permanentemente.',async()=>{
+  openConf('Excluir cliente','Será removido permanentemente.',async()=>{
     await db.from('clientes').delete().eq('id',id);
-    S.clients=S.clients.filter(c=>c.id!==id); renderCli(); updateBadges(); toast('Cliente removido');
+    S.clients=S.clients.filter(c=>c.id!==id);
+    renderCli(); updateBadges(); toast('Cliente removido');
   },'Excluir','btn-danger');
 }
 
 function renderCli() {
   document.getElementById('loading-cli').style.display='none';
   document.getElementById('card-cli').style.display='block';
-  const tbody=document.getElementById('tbody-cli'), empty=document.getElementById('empty-cli');
+  const tbody=document.getElementById('tbody-cli'),empty=document.getElementById('empty-cli');
   if(!S.clients.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   tbody.innerHTML=S.clients.map(c=>`<tr>
@@ -751,7 +578,6 @@ function renderCli() {
   </tr>`).join('');
 }
 
-// ─── HISTÓRICO ───────────────────────────────────────────────────────────────
 function renderHist() {
   document.getElementById('loading-hist').style.display='none';
   const srch=(document.getElementById('s-hist')?.value||'').toLowerCase();
@@ -759,13 +585,13 @@ function renderHist() {
     const txt=[a.empregado,getCN(a.cliente_id),getUN(a.estagiaria_id)].join(' ').toLowerCase();
     return !srch||txt.includes(srch);
   });
-  const cont=document.getElementById('hist-content'), empty=document.getElementById('empty-hist');
+  const cont=document.getElementById('hist-content'),empty=document.getElementById('empty-hist');
   if(!list.length){ cont.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   const grouped={};
   list.forEach(a=>{
-    const d=new Date(a.concluido_em||a.criado_em||Date.now());
-    const y=d.getFullYear(), m=d.getMonth();
+    const d=new Date(a.concluido_em||Date.now());
+    const y=d.getFullYear(),m=d.getMonth();
     if(!grouped[y]) grouped[y]={};
     if(!grouped[y][m]) grouped[y][m]=[];
     grouped[y][m].push(a);
@@ -774,91 +600,37 @@ function renderHist() {
   cont.innerHTML=years.map(y=>{
     const months=Object.keys(grouped[y]).sort((a,b)=>b-a);
     return`<div class="hy">${y}</div>${months.map(m=>{
-      const items=grouped[y][m], mid=`hm_${y}_${m}`;
+      const items=grouped[y][m],mid=`hm_${y}_${m}`;
       return`<div class="hm">
         <div class="hmh" onclick="document.getElementById('${mid}').classList.toggle('open')">
           <span class="hmht">${MESES[m]}</span>
           <span class="hmc">${items.length} admissão${items.length!==1?'ões':''}</span>
         </div>
-        <div class="hmb" id="${mid}">
-          <div class="tw"><table>
-            <thead><tr><th>Solicitação</th><th>Admissão</th><th>Estagiária</th><th>Empresa</th><th>Empregado</th><th>Obs</th><th>Concluída em</th></tr></thead>
-            <tbody>${items.map(a=>`<tr>
-              <td class="mono">${fmtD(a.data_solicitacao)}</td>
-              <td class="mono">${fmtD(a.data_admissao)}</td>
-              <td><div style="display:flex;align-items:center;gap:5px">${avHtml(a.estagiaria_id)}<span>${getUN(a.estagiaria_id)}</span></div></td>
-              <td style="font-size:11px">${getCN(a.cliente_id)}</td>
-              <td><strong>${a.empregado}</strong></td>
-              <td class="obs-c" style="font-size:11px;color:var(--tx2)">${a.observacao||'—'}</td>
-              <td class="mono" style="color:var(--tx3)">${a.concluido_em?new Date(a.concluido_em).toLocaleDateString('pt-BR'):'—'}</td>
-            </tr>`).join('')}</tbody>
-          </table></div>
-        </div>
+        <div class="hmb" id="${mid}"><div class="tw"><table>
+          <thead><tr><th>Solicitação</th><th>Admissão</th><th>Estagiária</th><th>Empresa</th><th>Empregado</th><th>Obs</th><th>Concluída em</th></tr></thead>
+          <tbody>${items.map(a=>`<tr>
+            <td class="mono">${fmtD(a.data_solicitacao)}</td>
+            <td class="mono">${fmtD(a.data_admissao)}</td>
+            <td><div style="display:flex;align-items:center;gap:5px">${avHtml(a.estagiaria_id)}<span>${getUN(a.estagiaria_id)}</span></div></td>
+            <td style="font-size:11px">${getCN(a.cliente_id)}</td>
+            <td><strong>${a.empregado}</strong></td>
+            <td class="obs-c" style="color:var(--tx2);font-size:11px">${a.observacao||'—'}</td>
+            <td class="mono" style="color:var(--tx3)">${a.concluido_em?new Date(a.concluido_em).toLocaleDateString('pt-BR'):'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table></div></div>
       </div>`;
     }).join('')}`;
   }).join('');
 }
 
-// ─── PRIMEIRO ACESSO ─────────────────────────────────────────────────────────
-async function criarPrimeiro() {
-  const pw = document.getElementById('primeiro-pw').value;
-  const err = document.getElementById('primeiro-err');
-  err.style.display = 'none';
-  if(pw !== 'Marka@7777') {
-    err.textContent = 'Senha incorreta. Digite a senha correta para confirmar.';
-    err.style.display = 'block';
-    return;
-  }
-  const admin = {
-    nome: 'Gabriel',
-    apelido: 'Gabriel',
-    funcao: 'Múltiplas funções',
-    cor: '#185FA5',
-    senha: 'Marka@7777',
-  };
-  const { data, error } = await db.from('usuarios').insert(admin).select().single();
-  if(error) {
-    err.textContent = 'Erro ao criar conta: ' + error.message;
-    err.style.display = 'block';
-    return;
-  }
-  S.users = [data];
-  entrarComo(data);
-}
-
-function entrarComo(u) {
-  curUser = u;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('main-screen').style.display  = 'flex';
-  document.getElementById('topbar-name').textContent    = u.apelido || u.nome;
-  const av = document.getElementById('topbar-av');
-  av.textContent = ini(u.nome);
-  av.style.background = u.cor || '#185FA5';
+async function init() {
+  document.getElementById('topbar-date').textContent=
+    new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  try{ await loadAll(); }catch(e){ console.error(e); }
+  document.getElementById('splash').style.display='none';
+  document.getElementById('app').style.display='flex';
   renderAdm(); updateBadges();
 }
-
-// ─── INIT ────────────────────────────────────────────────────────────────────
-async function init() {
-  try {
-    await loadAll();
-  } catch(e) {
-    console.error(e);
-  }
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-
-  if(S.users.length === 0) {
-    // Banco vazio: mostrar tela de primeiro acesso
-    document.getElementById('login-box-normal').style.display  = 'none';
-    document.getElementById('login-box-primeiro').style.display = 'block';
-  } else {
-    // Usuários já existem: mostrar login normal
-    document.getElementById('login-box-normal').style.display  = 'block';
-    document.getElementById('login-box-primeiro').style.display = 'none';
-    fillLoginSel();
-  }
-}
-
 init();
 </script>
 </body>
