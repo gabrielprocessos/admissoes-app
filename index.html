@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Admissões</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -20,30 +21,62 @@
     --ff:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
   }
   body{font-family:var(--ff);background:var(--bg);color:var(--tx);min-height:100vh;font-size:13px;line-height:1.5}
+
+  /* SPLASH */
   #splash{position:fixed;inset:0;background:var(--surf);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px}
   .splash-icon{width:48px;height:48px;background:var(--acc);border-radius:12px;display:flex;align-items:center;justify-content:center}
   .splash-icon svg{width:28px;height:28px}
   .splash-txt{font-size:12px;color:var(--tx3)}
-  .topbar{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100}
+
+  /* LOGIN */
+  #login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--bg)}
+  .login-box{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);padding:36px;width:360px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+  .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .login-logo-icon{width:36px;height:36px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center}
+  .login-logo-icon svg{width:20px;height:20px}
+  .login-title{font-size:17px;font-weight:600}
+  .login-sub{font-size:12px;color:var(--tx2);margin-bottom:24px;margin-top:2px}
+  .err-box{font-size:12px;color:var(--red);background:var(--red-l);padding:8px 10px;border-radius:var(--r);margin-bottom:12px;display:none}
+
+  /* APP */
+  #app{display:none;flex-direction:column;min-height:100vh}
+  .topbar{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;gap:10px}
   .topbar-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--acc)}
   .topbar-icon{width:28px;height:28px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center}
   .topbar-icon svg{width:16px;height:16px}
-  .topbar-date{font-size:11px;color:var(--tx3);font-family:var(--fm);margin-left:auto}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tx2)}
+  .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+
   .nav{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;gap:2px}
   .ntab{padding:9px 16px;border:none;background:none;font-family:var(--ff);font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px;transition:color .12s}
   .ntab:hover{color:var(--tx)}.ntab.on{color:var(--acc);border-bottom-color:var(--acc)}
   .nbadge{background:var(--acc-l);color:var(--acc);font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;font-family:var(--fm)}
+
   .content{padding:20px;flex:1}
   .page{display:none}.page.on{display:block}
   .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .ph-title{font-size:16px;font-weight:600;letter-spacing:-.3px}
   .ph-sub{font-size:11px;color:var(--tx2);margin-top:2px}
+
+  /* BUTTONS */
   .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-family:var(--ff);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bord2);background:var(--surf);color:var(--tx);transition:background .1s}
   .btn:hover{background:var(--surf2)}
   .btn-primary{background:var(--acc);color:#fff;border-color:var(--acc)}.btn-primary:hover{background:#0C447C}
   .btn-green{background:var(--grn);color:#fff;border-color:var(--grn)}.btn-green:hover{background:#173404}
   .btn-danger{background:var(--red-l);color:var(--red);border-color:rgba(163,45,45,.2)}.btn-danger:hover{background:#F7C1C1}
   .btn-sm{padding:4px 9px;font-size:11px;border-radius:6px}
+  .btn-full{width:100%;justify-content:center;margin-top:6px}
+
+  /* FORMS */
+  .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+  .fg label{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
+  .fg input,.fg select,.fg textarea{padding:8px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:13px;color:var(--tx);background:var(--surf);outline:none;width:100%}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+  .fg textarea{resize:vertical;min-height:64px}
+  .fgg{display:grid;gap:0 14px}.fgg-2{grid-template-columns:1fr 1fr}.fgg-3{grid-template-columns:1fr 1fr 1fr}.fgg-full{grid-column:1/-1}
+  .div{height:1px;background:var(--bord);margin:12px 0}
+
+  /* CARD / TABLE */
   .card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);box-shadow:0 1px 4px rgba(0,0,0,.05)}
   .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px}
   .sc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:12px 14px}
@@ -55,71 +88,107 @@
   td{padding:8px 10px;border-bottom:1px solid var(--bord);vertical-align:middle}
   tr:last-child td{border-bottom:none}
   tr:hover td{background:rgba(0,0,0,.012)}
+
+  /* BADGES */
   .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;white-space:nowrap}
   .b-grn{background:var(--grn-l);color:var(--grn)}.b-amb{background:var(--amb-l);color:var(--amb)}
   .b-red{background:var(--red-l);color:var(--red)}.b-blu{background:var(--acc-l);color:var(--acc)}.b-gry{background:var(--surf2);color:var(--tx2)}
-  .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-  .fg label{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
-  .fg input,.fg select,.fg textarea{padding:8px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:13px;color:var(--tx);background:var(--surf);outline:none;width:100%}
-  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
-  .fg textarea{resize:vertical;min-height:64px}
-  .fgg{display:grid;gap:0 14px}.fgg-2{grid-template-columns:1fr 1fr}.fgg-3{grid-template-columns:1fr 1fr 1fr}.fgg-full{grid-column:1/-1}
-  .div{height:1px;background:var(--bord);margin:12px 0}
+
+  /* MODAL */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
   .overlay.open{display:flex}
   .modal{background:var(--surf);border-radius:var(--rl);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
   .mh{padding:16px 20px 12px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surf);z-index:1}
   .mt{font-size:15px;font-weight:600}.mb{padding:16px 20px}
   .mf{padding:12px 20px;border-top:1px solid var(--bord);display:flex;justify-content:flex-end;gap:8px;background:var(--surf);position:sticky;bottom:0}
+
+  /* GRIDS */
   .ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
   .ucard{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);padding:14px}
+
+  /* HISTORICO */
   .hy{font-size:14px;font-weight:600;margin:20px 0 8px}
   .hm{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
   .hmh{padding:10px 14px;background:var(--surf2);border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
   .hmht{font-size:12px;font-weight:600}.hmc{font-size:11px;color:var(--tx2)}
   .hmb{display:none}.hmb.open{display:block}
+
+  /* CONFIRM */
   .cbox{background:var(--surf);border-radius:var(--rl);padding:28px;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)}
-  .ctitle{font-size:15px;font-weight:600;margin-bottom:8px}.cmsg{font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:20px}
+  .ctitle{font-size:15px;font-weight:600;margin-bottom:8px}
+  .cmsg{font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:20px}
   .cact{display:flex;gap:8px;justify-content:flex-end}
+
+  /* TOAST */
   .twr{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
   .tw2{background:var(--tx);color:#fff;padding:9px 16px;border-radius:var(--r);font-size:12px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;max-width:300px}
   .tw2.show{opacity:1;transform:translateY(0)}
+
+  /* MISC */
   .srow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   .srow input,.srow select{padding:6px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:12px;color:var(--tx);background:var(--surf);outline:none}
   .srow input:focus,.srow select:focus{border-color:var(--acc)}
   .srow input[type=search]{max-width:220px}.srow select{max-width:170px}
   .mono{font-family:var(--fm);font-size:11px}
   .obs-c{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0}
+  .av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--bord2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .empty{text-align:center;padding:36px;color:var(--tx3);font-size:12px}
+  .tag-admin{background:#FEF3E2;color:#B45309;font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px}
   @media(max-width:640px){.fgg-2,.fgg-3{grid-template-columns:1fr}.content{padding:12px}}
 </style>
 </head>
 <body>
 
+<!-- SPLASH -->
 <div id="splash">
   <div class="splash-icon"><svg viewBox="0 0 28 28" fill="none"><path d="M5 20l5-11 3 6 3-3 5 8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   <div class="splash-txt">Carregando...</div>
 </div>
 
-<div id="app" style="display:none;flex-direction:column;min-height:100vh">
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;align-items:center;justify-content:center;min-height:100vh">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="login-title">Admissões</div>
+    </div>
+    <div class="login-sub">Faça login para acessar o sistema</div>
+    <div id="login-err" class="err-box"></div>
+    <div class="fg"><label>Login</label><input type="text" id="l-user" placeholder="Seu login" autocomplete="username"></div>
+    <div class="fg"><label>Senha</label><input type="password" id="l-pass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
   <div class="topbar">
     <div class="topbar-logo">
       <div class="topbar-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 15l4-9 2.5 5 2.5-2.5L17 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       Controle de Admissões
     </div>
-    <div class="topbar-date" id="topbar-date"></div>
+    <div class="topbar-right">
+      <div class="avatar" id="top-av" style="background:var(--acc)"></div>
+      <span id="top-nome"></span>
+      <span id="top-admin-tag"></span>
+      <button class="btn btn-sm" onclick="doLogout()">Sair</button>
+    </div>
   </div>
-  <nav class="nav">
+
+  <nav class="nav" id="main-nav">
     <button class="ntab on" onclick="showPage('admissoes')">Admissões <span class="nbadge" id="b-adm">0</span></button>
     <button class="ntab" onclick="showPage('usuarios')">Usuários <span class="nbadge" id="b-usr">0</span></button>
     <button class="ntab" onclick="showPage('clientes')">Clientes <span class="nbadge" id="b-cli">0</span></button>
     <button class="ntab" onclick="showPage('historico')">Histórico <span class="nbadge" id="b-hist">0</span></button>
+    <!-- Aba Logins: só aparece pro admin master -->
+    <button class="ntab" id="tab-logins" onclick="showPage('logins')" style="display:none">Logins <span class="nbadge" id="b-log">0</span></button>
   </nav>
+
   <div class="content">
 
+    <!-- ADMISSÕES -->
     <div class="page on" id="page-admissoes">
       <div class="ph">
         <div><div class="ph-title">Admissões em andamento</div><div class="ph-sub">Gerencie as admissões abertas</div></div>
@@ -152,6 +221,7 @@
       </div>
     </div>
 
+    <!-- USUÁRIOS -->
     <div class="page" id="page-usuarios">
       <div class="ph">
         <div><div class="ph-title">Usuários</div><div class="ph-sub">Pessoas que participam das admissões</div></div>
@@ -161,6 +231,7 @@
       <div class="ugrid" id="grid-usr"></div>
     </div>
 
+    <!-- CLIENTES -->
     <div class="page" id="page-clientes">
       <div class="ph">
         <div><div class="ph-title">Clientes</div><div class="ph-sub">Empresas cadastradas</div></div>
@@ -178,14 +249,35 @@
       </div>
     </div>
 
+    <!-- HISTÓRICO -->
     <div class="page" id="page-historico">
       <div class="ph">
         <div><div class="ph-title">Histórico</div><div class="ph-sub">Admissões concluídas por mês</div></div>
-        <input type="search" id="s-hist" placeholder="Buscar..." oninput="renderHist()" style="padding:6px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:12px;outline:none;max-width:200px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="search" id="s-hist" placeholder="Buscar..." oninput="renderHist()" style="padding:6px 10px;border:1px solid var(--bord2);border-radius:var(--r);font-family:var(--ff);font-size:12px;outline:none;max-width:200px">
+          <button class="btn btn-green" onclick="exportarXLS()" style="white-space:nowrap">⬇ Exportar Excel</button>
+        </div>
       </div>
       <div id="loading-hist" class="empty"><div class="spinner"></div></div>
       <div id="hist-content"></div>
       <div id="empty-hist" class="empty" style="display:none">Nenhum registro ainda</div>
+    </div>
+
+    <!-- LOGINS (só admin master) -->
+    <div class="page" id="page-logins">
+      <div class="ph">
+        <div><div class="ph-title">Logins</div><div class="ph-sub">Gerencie quem pode acessar o sistema</div></div>
+        <button class="btn btn-primary" onclick="openLoginModal()">+ Novo login</button>
+      </div>
+      <div class="card">
+        <div class="tw">
+          <table>
+            <thead><tr><th>Login</th><th>Nome exibido</th><th>Perfil</th><th></th></tr></thead>
+            <tbody id="tbody-logins"></tbody>
+          </table>
+          <div id="empty-logins" class="empty" style="display:none">Nenhum login cadastrado além do admin</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -266,6 +358,22 @@
   </div>
 </div>
 
+<!-- MODAL LOGIN -->
+<div class="overlay" id="mo-login">
+  <div class="modal" style="max-width:400px">
+    <div class="mh"><span class="mt" id="mo-login-t">Novo login</span><button class="btn btn-sm" onclick="closeM('mo-login')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="lg-id">
+      <div class="fg"><label>Login (nome de acesso)</label><input type="text" id="lg-login" placeholder="Ex: isabelle" autocomplete="off"></div>
+      <div class="fg"><label>Nome exibido</label><input type="text" id="lg-nome" placeholder="Ex: Isabelle Pessoal"></div>
+      <div class="div"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="lg-pw" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="fg"><label>Confirmar senha</label><input type="password" id="lg-pw2" placeholder="Repita a senha" autocomplete="new-password"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('mo-login')">Cancelar</button><button class="btn btn-primary" onclick="saveLogin()">Salvar</button></div>
+  </div>
+</div>
+
 <!-- CONFIRMAR -->
 <div class="overlay" id="conf-ov">
   <div class="cbox">
@@ -281,12 +389,19 @@
 <div class="twr" id="twr"></div>
 
 <script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://xopwyacmxilyzapnmqtl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MCmb3hDxCOv8OUxyuxyZOw_RI2VkVvI';
+
+// Admin master fixo — só altere aqui se quiser mudar
+const ADMIN = { login: 'gabriel', senha: 'InovacaoMarka@7777', nome: 'Gabriel', isAdmin: true };
+
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let S = { users:[], clients:[], admissoes:[], historico:[] };
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+let S = { users:[], clients:[], admissoes:[], historico:[], logins:[] };
+let curUser = null; // { login, nome, isAdmin }
 let editId = null;
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -294,17 +409,24 @@ const today = () => new Date().toISOString().slice(0,10);
 const fmtD  = d => { if(!d) return '—'; const[y,m,dd]=d.split('-'); return`${dd}/${m}/${y}`; };
 const ini   = n => n ? n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
 
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
 async function loadAll() {
-  const [u,c,a,h] = await Promise.all([
+  const [u,c,a,h,lg] = await Promise.all([
     db.from('usuarios').select('*').order('nome'),
     db.from('clientes').select('*').order('nome'),
     db.from('admissoes').select('*').order('criado_em',{ascending:false}),
     db.from('historico').select('*').order('concluido_em',{ascending:false}),
+    db.from('logins').select('*').order('nome'),
   ]);
-  S.users=u.data||[]; S.clients=c.data||[]; S.admissoes=a.data||[]; S.historico=h.data||[];
+  S.users     = u.data  || [];
+  S.clients   = c.data  || [];
+  S.admissoes = a.data  || [];
+  S.historico = h.data  || [];
+  S.logins    = lg.data || [];
 }
 
-function toast(msg,type='') {
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function toast(msg, type='') {
   const el=document.createElement('div'); el.className='tw2';
   if(type==='green') el.style.background='#27500A';
   if(type==='red')   el.style.background='#A32D2D';
@@ -331,26 +453,148 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
-  document.querySelector(`.ntab[onclick="showPage('${id}')"]`).classList.add('on');
+  const tab=document.querySelector(`.ntab[onclick="showPage('${id}')"]`);
+  if(tab) tab.classList.add('on');
   if(id==='admissoes') renderAdm();
   if(id==='usuarios')  renderUsr();
   if(id==='clientes')  renderCli();
   if(id==='historico') renderHist();
+  if(id==='logins')    renderLogins();
 }
 
 function updateBadges() {
-  document.getElementById('b-adm').textContent=S.admissoes.length;
-  document.getElementById('b-usr').textContent=S.users.length;
-  document.getElementById('b-cli').textContent=S.clients.length;
-  document.getElementById('b-hist').textContent=S.historico.length;
+  document.getElementById('b-adm').textContent  = S.admissoes.length;
+  document.getElementById('b-usr').textContent  = S.users.length;
+  document.getElementById('b-cli').textContent  = S.clients.length;
+  document.getElementById('b-hist').textContent = S.historico.length;
+  document.getElementById('b-log').textContent  = S.logins.length;
 }
 
 const sBadge=s=>{ const m={'Em andamento':'b-blu','Pendente':'b-amb','Suspenso':'b-red','Concluída':'b-grn'}; return`<span class="badge ${m[s]||'b-gry'}">${s}</span>`; };
 const getUN=id=>{ const u=S.users.find(u=>u.id===id); return u?(u.apelido||u.nome):'—'; };
 const getUC=id=>{ const u=S.users.find(u=>u.id===id); return u?.cor||'#5F5E5A'; };
 const getCN=id=>{ const c=S.clients.find(c=>c.id===id); if(!c) return id||'—'; return c.nome+(c.codigo?` (${c.codigo})`:''); };
-const avHtml=id=>`<div class="avatar" style="background:${getUC(id)}">${ini(getUN(id))}</div>`;
+const avHtml=id=>`<div class="av" style="background:${getUC(id)}">${ini(getUN(id))}</div>`;
 
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const login = document.getElementById('l-user').value.trim().toLowerCase();
+  const senha  = document.getElementById('l-pass').value;
+  const err    = document.getElementById('login-err');
+  err.style.display = 'none';
+
+  if(!login || !senha) { err.textContent='Preencha login e senha.'; err.style.display='block'; return; }
+
+  // Verifica admin master primeiro
+  if(login === ADMIN.login && senha === ADMIN.senha) {
+    entrarComo({ login: ADMIN.login, nome: ADMIN.nome, isAdmin: true });
+    return;
+  }
+
+  // Verifica logins cadastrados no banco
+  const encontrado = S.logins.find(l => l.login.toLowerCase() === login && l.senha === senha);
+  if(encontrado) {
+    entrarComo({ login: encontrado.login, nome: encontrado.nome, isAdmin: false });
+    return;
+  }
+
+  err.textContent = 'Login ou senha incorretos.';
+  err.style.display = 'block';
+}
+
+function entrarComo(u) {
+  curUser = u;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('top-nome').textContent = u.nome;
+  const av = document.getElementById('top-av');
+  av.textContent = ini(u.nome);
+  av.style.background = u.isAdmin ? '#185FA5' : '#27500A';
+  document.getElementById('top-admin-tag').innerHTML = u.isAdmin ? '<span class="tag-admin">Admin</span>' : '';
+  // Aba Logins só pro admin
+  document.getElementById('tab-logins').style.display = u.isAdmin ? 'flex' : 'none';
+  document.getElementById('l-pass').value = '';
+  renderAdm(); updateBadges();
+}
+
+function doLogout() {
+  curUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  // Voltar para aba admissões
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-admissoes').classList.add('on');
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('.ntab[onclick="showPage(\'admissoes\')"]').classList.add('on');
+}
+
+// ─── LOGINS ───────────────────────────────────────────────────────────────────
+function openLoginModal(id=null) {
+  editId = id;
+  document.getElementById('mo-login-t').textContent = id ? 'Editar login' : 'Novo login';
+  const l = id ? S.logins.find(l=>l.id===id) : null;
+  document.getElementById('lg-id').value    = l?.id||'';
+  document.getElementById('lg-login').value = l?.login||'';
+  document.getElementById('lg-nome').value  = l?.nome||'';
+  document.getElementById('lg-pw').value    = '';
+  document.getElementById('lg-pw2').value   = '';
+  openM('mo-login');
+}
+
+async function saveLogin() {
+  const login = document.getElementById('lg-login').value.trim().toLowerCase();
+  const nome  = document.getElementById('lg-nome').value.trim();
+  const pw    = document.getElementById('lg-pw').value;
+  const pw2   = document.getElementById('lg-pw2').value;
+
+  if(!login || !nome)       { toast('Preencha login e nome','red'); return; }
+  if(login === ADMIN.login) { toast('Este login é reservado para o administrador','red'); return; }
+  if(!editId && !pw)        { toast('Defina uma senha','red'); return; }
+  if(pw && pw.length < 6)   { toast('Senha mínima: 6 caracteres','red'); return; }
+  if(pw && pw !== pw2)      { toast('As senhas não coincidem','red'); return; }
+
+  const existing = editId ? S.logins.find(l=>l.id===editId) : null;
+  const obj = { login, nome, senha: pw || existing?.senha || '' };
+
+  let error;
+  if(editId) ({ error }=await db.from('logins').update(obj).eq('id',editId));
+  else       ({ error }=await db.from('logins').insert(obj));
+
+  if(error){ toast('Erro: '+error.message,'red'); return; }
+  toast(editId ? 'Login atualizado' : 'Login criado','green');
+  const {data}=await db.from('logins').select('*').order('nome');
+  S.logins = data||[];
+  closeM('mo-login'); renderLogins(); updateBadges();
+}
+
+async function delLogin(id) {
+  const l = S.logins.find(l=>l.id===id);
+  openConf('Excluir login',`O login "${l.login}" será removido. Esse usuário não conseguirá mais acessar.`,async()=>{
+    await db.from('logins').delete().eq('id',id);
+    S.logins = S.logins.filter(l=>l.id!==id);
+    renderLogins(); updateBadges(); toast('Login removido');
+  },'Excluir','btn-danger');
+}
+
+function renderLogins() {
+  const tbody = document.getElementById('tbody-logins');
+  const empty  = document.getElementById('empty-logins');
+  if(!S.logins.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = S.logins.map(l=>`<tr>
+    <td><strong>${l.login}</strong></td>
+    <td>${l.nome}</td>
+    <td><span class="badge b-gry">Padrão</span></td>
+    <td><div style="display:flex;gap:4px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="openLoginModal('${l.id}')">✎ Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="delLogin('${l.id}')">✕</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+// ─── POPULATE SELECTS ─────────────────────────────────────────────────────────
 function populateSels() {
   ['a-aux','a-resp','a-est'].forEach(sid=>{
     const s=document.getElementById(sid),cur=s.value;
@@ -364,6 +608,7 @@ function populateSels() {
   if(fe){ const c2=fe.value; fe.innerHTML='<option value="">Todas estagiárias</option>'+S.users.map(u=>`<option value="${u.id}">${u.apelido||u.nome}</option>`).join(''); if(c2) fe.value=c2; }
 }
 
+// ─── ADMISSÕES ────────────────────────────────────────────────────────────────
 function openAdmModal(id=null) {
   editId=id; populateSels();
   document.getElementById('mo-adm-t').textContent=id?'Editar admissão':'Nova admissão';
@@ -475,6 +720,7 @@ async function delAdm(id) {
   },'Excluir','btn-danger');
 }
 
+// ─── USUÁRIOS ─────────────────────────────────────────────────────────────────
 function openUsrModal(id=null) {
   editId=id;
   document.getElementById('mo-usr-t').textContent=id?'Editar usuário':'Novo usuário';
@@ -515,7 +761,7 @@ function renderUsr() {
   if(!S.users.length){ g.innerHTML='<div class="empty" style="grid-column:1/-1">Nenhum usuário cadastrado</div>'; return; }
   g.innerHTML=S.users.map(u=>`<div class="ucard">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div class="avatar" style="width:38px;height:38px;font-size:14px;background:${u.cor||'#185FA5'}">${ini(u.nome)}</div>
+      <div class="av" style="width:38px;height:38px;font-size:14px;background:${u.cor||'#185FA5'}">${ini(u.nome)}</div>
       <div><div style="font-size:13px;font-weight:600">${u.nome}</div><div style="font-size:11px;color:var(--tx2)">${u.funcao}</div></div>
     </div>
     <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -525,6 +771,7 @@ function renderUsr() {
   </div>`).join('');
 }
 
+// ─── CLIENTES ─────────────────────────────────────────────────────────────────
 function openCliModal(id=null) {
   editId=id;
   document.getElementById('mo-cli-t').textContent=id?'Editar cliente':'Novo cliente';
@@ -578,6 +825,7 @@ function renderCli() {
   </tr>`).join('');
 }
 
+// ─── HISTÓRICO ────────────────────────────────────────────────────────────────
 function renderHist() {
   document.getElementById('loading-hist').style.display='none';
   const srch=(document.getElementById('s-hist')?.value||'').toLowerCase();
@@ -623,13 +871,37 @@ function renderHist() {
   }).join('');
 }
 
+// ─── EXPORTAR XLS ─────────────────────────────────────────────────────────────
+function exportarXLS() {
+  if(!S.historico.length){ toast('Nenhum registro para exportar','red'); return; }
+  const grouped={};
+  S.historico.forEach(a=>{
+    const d=new Date(a.concluido_em||Date.now());
+    const key=`${MESES[d.getMonth()]} ${d.getFullYear()}`;
+    if(!grouped[key]) grouped[key]=[];
+    grouped[key].push(a);
+  });
+  const wb=XLSX.utils.book_new();
+  Object.entries(grouped).forEach(([mesAno,registros])=>{
+    const rows=registros.map(a=>({'Data Solicitação':fmtD(a.data_solicitacao),'Data Admissão':fmtD(a.data_admissao),'Data Entrega':fmtD(a.data_entrega),'Aux. Responsável':getUN(a.auxiliar_id),'Resp. Empresa':getUN(a.responsavel_id),'Estagiária':getUN(a.estagiaria_id),'Empresa':getCN(a.cliente_id),'Empregado':a.empregado||'','Status':a.status||'Concluída','Observação':a.observacao||'','Concluída em':a.concluido_em?new Date(a.concluido_em).toLocaleDateString('pt-BR'):''}));
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=[{wch:14},{wch:14},{wch:14},{wch:20},{wch:20},{wch:20},{wch:28},{wch:28},{wch:14},{wch:36},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws,mesAno.slice(0,31));
+  });
+  const todosRows=S.historico.sort((a,b)=>new Date(b.concluido_em||0)-new Date(a.concluido_em||0)).map(a=>{const d=new Date(a.concluido_em||Date.now());return{'Mês/Ano':`${MESES[d.getMonth()]} ${d.getFullYear()}`,'Data Solicitação':fmtD(a.data_solicitacao),'Data Admissão':fmtD(a.data_admissao),'Data Entrega':fmtD(a.data_entrega),'Aux. Responsável':getUN(a.auxiliar_id),'Resp. Empresa':getUN(a.responsavel_id),'Estagiária':getUN(a.estagiaria_id),'Empresa':getCN(a.cliente_id),'Empregado':a.empregado||'','Status':a.status||'Concluída','Observação':a.observacao||'','Concluída em':a.concluido_em?new Date(a.concluido_em).toLocaleDateString('pt-BR'):''}});
+  const wsTodos=XLSX.utils.json_to_sheet(todosRows);
+  wsTodos['!cols']=[{wch:16},{wch:14},{wch:14},{wch:14},{wch:20},{wch:20},{wch:20},{wch:28},{wch:28},{wch:14},{wch:36},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,wsTodos,'Todos os registros');
+  const dataHoje=new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+  XLSX.writeFile(wb,`historico-admissoes-${dataHoje}.xlsx`);
+  toast('Arquivo Excel gerado!','green');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-  document.getElementById('topbar-date').textContent=
-    new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   try{ await loadAll(); }catch(e){ console.error(e); }
   document.getElementById('splash').style.display='none';
-  document.getElementById('app').style.display='flex';
-  renderAdm(); updateBadges();
+  document.getElementById('login-screen').style.display='flex';
 }
 init();
 </script>
